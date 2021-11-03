@@ -1,0 +1,96 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'java'
+    id "io.qameta.allure" version "2.8.1" apply true
+    id 'maven-publish'
+    id "org.sonarqube" version "3.1.1"
+    id 'org.springframework.boot' version '2.5.6'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+def cucumberVersion = "6.9.0"
+def lombokVersion = "1.18.22"
+def restAssuredVersion = "4.4.0"
+def htmlUnitVersion = "2.50.0"
+def unirestJavaVersion = "3.11.11"
+def elasticSearchClientVersion = "7.9.1"
+def springVersion = "5.4.2"
+def commonConfigVersion = "1.10"
+def allureVersion = "2.14.0"
+def selenideVersion = "5.25.0"
+def guavaVersion = "30.1.1-jre"
+
+allure {
+    autoconfigure = false
+    version = allureVersion
+}
+
+
+dependencies {
+    testImplementation group: 'io.rest-assured', name: 'rest-assured', version: restAssuredVersion
+    testImplementation group: 'io.rest-assured', name: 'json-schema-validator', version: restAssuredVersion
+    testImplementation group: 'net.sourceforge.htmlunit', name: 'htmlunit', version: htmlUnitVersion
+    testImplementation group: 'com.konghq', name: 'unirest-java', version: unirestJavaVersion
+    testImplementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: elasticSearchClientVersion
+    testImplementation group: 'io.cucumber', name: 'cucumber-junit', version: cucumberVersion
+    testImplementation group: 'io.cucumber', name: 'cucumber-java', version: cucumberVersion
+    testImplementation group: 'io.cucumber', name: 'cucumber-core', version: cucumberVersion
+    testImplementation group: 'io.cucumber', name: 'cucumber-gherkin', version: cucumberVersion
+    testImplementation group: 'io.cucumber', name: 'cucumber-spring', version: cucumberVersion
+    implementation group: 'org.springframework.integration', name: 'spring-integration-test', version: springVersion
+    implementation (group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.5.6'){
+        exclude group: "ch.qos.logback", module: "logback-classic"
+    }
+    implementation (group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.5.6'){
+        exclude group: "ch.qos.logback", module: "logback-classic"
+    }
+    implementation (group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version: '2.5.6'){
+        exclude group: "ch.qos.logback", module: "logback-classic"
+    }
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    implementation group: 'commons-configuration', name: 'commons-configuration', version: commonConfigVersion
+    implementation fileTree(include: ["aotf-encryptor-1.0.0.jar"], dir: "libs")
+    testImplementation group: 'io.qameta.allure', name: 'allure-testng', version: allureVersion
+    testImplementation group: 'io.qameta.allure', name: 'allure-cucumber5-jvm', version: allureVersion
+    testImplementation group: 'com.google.guava', name: 'guava', version: guavaVersion
+    testImplementation group: 'com.codeborne', name: 'selenide', version: selenideVersion
+    implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.32'
+}
+
+task cucumber() {
+    dependsOn assemble, testClasses
+    doLast {
+        javaexec {
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = [
+                    '--plugin', 'html:build/cucumber-report/cucumber-html-report.html',
+                    '--plugin', 'json:build/cucumber-report/cucumber.json',
+                    '--plugin', 'pretty',
+                    //'--plugin', 'io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm',
+                    '--tags', tags]
+        }
+    }
+}
+
+void exclude(LinkedHashMap<String, String> stringStringLinkedHashMap) {
+    exclude group: "ch.qos.logback", module: "logback-classic"
+}
